@@ -3,7 +3,7 @@ module github.com/tinode/chat
 go 1.14
 
 require (
-	firebase.google.com/go v3.12.0+incompatible
+	firebase.google.com/go v3.13.0+incompatible
 	github.com/aws/aws-sdk-go v1.29.29
 	github.com/bitly/go-hostpool v0.1.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
