@@ -64,7 +64,40 @@ func (a *authenticator) UpdateRecord(rec *auth.Rec, secret []byte) (*auth.Rec, e
 }
 
 func (a *authenticator) Authenticate(secret []byte) (*auth.Rec, []byte, error) {
-	return nil, nil, nil
+	ctx := context.Background()
+
+	jwtToken := string(secret)
+
+	userRecord, err := a.FbAuth.VerifyIDToken(ctx, jwtToken)
+	if err != nil {
+		return nil, nil, types.ErrInternal
+	}
+
+	fbUid := userRecord.UID
+
+	uid, authLvl, _, expires, err := store.Users.GetAuthUniqueRecord(a.Scheme, fbUid)
+	if err != nil {
+		return nil, nil, err
+	}
+	if uid.IsZero() {
+		// Invalid login.
+		return nil, nil, types.ErrFailed
+	}
+	if !expires.IsZero() && expires.Before(time.Now()) {
+		// The record has expired
+		return nil, nil, types.ErrExpired
+	}
+
+	var lifetime time.Duration
+	if !expires.IsZero() {
+		lifetime = time.Until(expires)
+	}
+	return &auth.Rec{
+		Uid:       uid,
+		AuthLevel: authLvl,
+		Lifetime:  lifetime,
+		Features:  0,
+		State:     types.StateUndefined}, nil, nil
 }
 
 func (a *authenticator) AsTag(token string) string {
